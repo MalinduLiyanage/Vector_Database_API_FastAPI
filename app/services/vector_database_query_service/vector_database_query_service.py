@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Any
 from fastapi import Depends
-from starlette.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
 from app.configs.app_settings import AppSettings, get_app_settings
 from app.dtos.requests.ann_search_request import ANNSearchRequest
 from app.dtos.responses.base_response import BaseResponse
@@ -59,7 +59,7 @@ class MilvusService:
 
         except Exception as e:
             return BaseResponse(
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
                 message=f"ANN search failed: {str(e)}",
                 data=None
             )
