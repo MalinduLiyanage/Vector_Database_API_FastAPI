@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard]
+pymilvus>=2.3.0
+python-dotenv
