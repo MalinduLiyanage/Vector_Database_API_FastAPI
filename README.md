@@ -15,7 +15,6 @@ To get the inital knowledge and config the DB, follow the Medium Article Series 
   "collection_name": "iris_data",
   "field_name": "features"
 }
-
 ```
 ### Example Request for ANN Filtered Search
 
@@ -30,8 +29,6 @@ To get the inital knowledge and config the DB, follow the Medium Article Series 
   "filter": "species like \"Iris%\"",
   "output_fields": ["species"]
 }
-
-
 ```
 ### Example Request for Hybrid Search
 
@@ -53,7 +50,4 @@ To get the inital knowledge and config the DB, follow the Medium Article Series 
   "metric_type": "L2",
   "consistency_level": "Strong"
 }
-
-
-
 ```
