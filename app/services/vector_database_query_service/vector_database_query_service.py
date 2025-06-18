@@ -7,8 +7,6 @@ from app.configs.app_settings import AppSettings, get_app_settings
 from app.dtos.requests.ann_search_request import ANNSearchRequest
 from app.dtos.responses.base_response import BaseResponse
 import logging
-
-# Replace this with your actual Milvus client (e.g., pymilvus)
 from pymilvus import Collection, connections, utility
 
 logger = logging.getLogger("milvus_service")
