@@ -5,7 +5,8 @@ class AppSettings(BaseSettings):
     # default values
     app_host: str = "127.0.0.1"
     app_port: int = 8000
-    milvus_uri: str = ""
+    milvus_host: str = ""
+    milvus_port: int = ""
     milvus_user: str = ""
     milvus_password: str = ""
     milvus_database: str = ""
