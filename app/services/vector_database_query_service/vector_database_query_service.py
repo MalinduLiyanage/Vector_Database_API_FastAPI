@@ -1,10 +1,9 @@
-# app/services/milvus_service.py
-
 from typing import List, Dict, Any
 from fastapi import Depends
-from starlette.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_422_UNPROCESSABLE_ENTITY
+from starlette.status import HTTP_200_OK, HTTP_422_UNPROCESSABLE_ENTITY
 from app.configs.app_settings import AppSettings, get_app_settings
 from app.dtos.requests.ann_search_request import ANNSearchRequest
+from app.dtos.requests.ann_filtered_search_request import ANNFilteredSearchRequest
 from app.dtos.responses.base_response import BaseResponse
 from pymilvus import Collection, connections
 
@@ -61,5 +60,46 @@ class MilvusService:
             return BaseResponse(
                 status_code=HTTP_422_UNPROCESSABLE_ENTITY,
                 message=f"ANN search failed: {str(e)}",
+                data=None
+            )
+
+    async def ann_filtered_search(self, request: ANNFilteredSearchRequest) -> BaseResponse[List[Dict[str, Any]]]:
+        try:
+            self._init_client()
+            collection = Collection(name=request.collection_name)
+            collection.load()
+
+            vectors = [request.query_vector]
+
+            results = collection.search(
+                data=vectors,
+                anns_field=request.field_name,
+                param={"metric_type": "L2", "params": {"nprobe": 10}},
+                limit=request.top_k,
+                expr=request.filter,
+                output_fields=request.output_fields
+            )
+
+            output = []
+            for hit in results[0]:
+                record = {
+                    "record_id": hit.id,
+                }
+                if hit.entity:
+                    record.update(hit.entity)
+                output.append(record)
+
+            collection.release()
+
+            return BaseResponse(
+                status_code=HTTP_200_OK,
+                message="Filtered ANN search completed successfully.",
+                data=output
+            )
+
+        except Exception as e:
+            return BaseResponse(
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                message=f"Filtered ANN search failed: {str(e)}",
                 data=None
             )
