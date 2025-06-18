@@ -4,8 +4,9 @@ from starlette.status import HTTP_200_OK, HTTP_422_UNPROCESSABLE_ENTITY
 from app.configs.app_settings import AppSettings, get_app_settings
 from app.dtos.requests.ann_search_request import ANNSearchRequest
 from app.dtos.requests.ann_filtered_search_request import ANNFilteredSearchRequest
+from app.dtos.requests.hybrid_search_request import HybridSearchRequest
 from app.dtos.responses.base_response import BaseResponse
-from pymilvus import Collection, connections
+from pymilvus import Collection, connections, AnnSearchRequest, WeightedRanker
 
 
 class MilvusService:
@@ -101,5 +102,65 @@ class MilvusService:
             return BaseResponse(
                 status_code=HTTP_422_UNPROCESSABLE_ENTITY,
                 message=f"Filtered ANN search failed: {str(e)}",
+                data=None
+            )
+
+    async def hybrid_search(self, request: HybridSearchRequest) -> BaseResponse[List[Dict[str, Any]]]:
+        try:
+            self._init_client()
+
+            collection = Collection(name=request.collection_name)
+            collection.load()
+
+            if len(request.query_vectors) != len(request.weights):
+                return BaseResponse(
+                    status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                    message="Number of query vectors and weights must match.",
+                    data=None
+                )
+
+            search_requests = []
+            for vector in request.query_vectors:
+                search_requests.append(
+                    AnnSearchRequest(
+                        data=[vector],
+                        anns_field=request.vector_field,
+                        param={"metric_type": request.metric_type},
+                        limit=request.per_query_limit,
+                        expr=request.filter
+                    )
+                )
+
+            result = collection.hybrid_search(
+                reqs=search_requests,
+                rerank=WeightedRanker(*request.weights),
+                limit=request.combined_limit,
+                output_fields=request.output_fields or [],
+                consistency_level=request.consistency_level
+            )
+
+            output = []
+            for hits in result:
+                for hit in hits:
+                    record = {
+                        "record_id": hit.id,
+                        "score": hit.distance
+                    }
+                    if hit.entity:
+                        record.update(hit.entity)
+                    output.append(record)
+
+            collection.release()
+
+            return BaseResponse(
+                status_code=HTTP_200_OK,
+                message="Hybrid ANN search completed successfully.",
+                data=output
+            )
+
+        except Exception as e:
+            return BaseResponse(
+                status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+                message=f"Hybrid ANN search failed: {str(e)}",
                 data=None
             )
