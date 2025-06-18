@@ -6,10 +6,7 @@ from starlette.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR
 from app.configs.app_settings import AppSettings, get_app_settings
 from app.dtos.requests.ann_search_request import ANNSearchRequest
 from app.dtos.responses.base_response import BaseResponse
-import logging
-from pymilvus import Collection, connections, utility
-
-logger = logging.getLogger("milvus_service")
+from pymilvus import Collection, connections
 
 
 class MilvusService:
@@ -53,7 +50,6 @@ class MilvusService:
                 })
 
             collection.release()
-            logger.info("ANN search completed successfully.")
 
             return BaseResponse(
                 status_code=HTTP_200_OK,
@@ -62,7 +58,6 @@ class MilvusService:
             )
 
         except Exception as e:
-            logger.error(f"ANN search failed: {e}")
             return BaseResponse(
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                 message=f"ANN search failed: {str(e)}",
